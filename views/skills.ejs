@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pick Skills — GitMatch</title>
+  <link rel="stylesheet" href="/css/skills.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">GitMatch</span>
+    <a href="/discover">Discover</a>
+    <a href="/saved">Saved</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </nav>
+
+  <div class="container">
+    <h2 style="margin-bottom: 8px;">Pick your skills</h2>
+    <p style="color: #8b949e; margin-bottom: 28px;">
+      Select languages and tools — we'll find repos with open issues that match.
+    </p>
+
+    <form action="/skills" method="POST">
+
+      <% if (userLangs.length > 0) { %>
+      <div class="section">
+        <h3>From your GitHub</h3>
+        <div class="tag-list">
+          <% userLangs.forEach(lang => { %>
+            <label class="skill-label">
+              <input
+                type="checkbox"
+                name="skills"
+                value="<%= lang %>"
+                <%= selected.includes(lang) ? 'checked' : '' %>
+              />
+              <span class="skill-tag"><%= lang %></span>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="section">
+        <h3>Languages</h3>
+        <div class="tag-list">
+          <% skills.languages.forEach(lang => { %>
+            <label class="skill-label">
+              <input
+                type="checkbox"
+                name="skills"
+                value="<%= lang %>"
+                <%= selected.includes(lang) ? 'checked' : '' %>
+              />
+              <span class="skill-tag"><%= lang %></span>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Frameworks &amp; tools</h3>
+        <div class="tag-list">
+          <% skills.frameworks.forEach(skill => { %>
+            <label class="skill-label">
+              <input
+                type="checkbox"
+                name="skills"
+                value="<%= skill %>"
+                <%= selected.includes(skill) ? 'checked' : '' %>
+              />
+              <span class="skill-tag"><%= skill %></span>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <button type="submit" style="margin-top: 8px;">
+        Find repos →
+      </button>
+    </form>
+  </div>
+
+  <script src="/js/PickSkills.js"></script>
+</body>
+</html>
