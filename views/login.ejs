@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitMatch</title>
+  <link rel="stylesheet" href="/css/login.css" />
+</head>
+<body>
+
+  <div class="center-wrap">
+
+    <h1>GitMatch</h1>
+
+    <p>Find open source repos that match your skills</p>
+
+    <div class="ornament"></div>
+
+    <div class="login-box">
+
+      <% if (error) { %>
+        <p class="error" style="margin-bottom: 14px;"><%= error %></p>
+      <% } %>
+
+      <form action="/login" method="POST">
+        <input
+          type="text"
+          name="username"
+          placeholder="Your GitHub username"
+          required
+          autocomplete="off"
+        />
+        <button type="submit">
+          <span>Let's go →</span>
+        </button>
+      </form>
+
+    </div>
+
+    <p class="login-note">
+      We only use your username to fetch public GitHub data.
+    </p>
+
+  </div>
+
+</body>
+</html>
