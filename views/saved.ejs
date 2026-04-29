@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saved — GitMatch</title>
+  <link rel="stylesheet" href="/css/skills.css" />
+<link rel="stylesheet" href="/css/saved.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">GitMatch</span>
+    <a href="/discover">Discover</a>
+    <a href="/saved" class="active">Saved</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </nav>
+
+  <div class="container">
+    <div class="discover-header">
+      <h2>Saved repos</h2>
+      <span style="color: #8b949e; font-size: 0.9rem;"><%= saved.length %> saved</span>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <% if (saved.length === 0) { %>
+      <div class="empty-state">
+        <p>Nothing saved yet.</p>
+        <a href="/discover" class="btn" style="margin-top: 16px;">Go discover repos →</a>
+      </div>
+    <% } %>
+
+    <div class="saved-list">
+      <% saved.forEach(repo => { %>
+        <div class="saved-card">
+          <div class="card-top">
+            <span class="difficulty <%= repo.difficulty %>"><%= repo.difficulty %></span>
+            <span class="lang-tag"><%= repo.language %></span>
+          </div>
+
+          <h3 class="repo-name">
+            <a href="<%= repo.repo_url %>" target="_blank" rel="noopener">
+              <%= repo.repo_name %>
+            </a>
+          </h3>
+
+          <p class="repo-desc"><%= repo.description %></p>
+
+          <div class="card-stats">
+            <span>⭐ <%= repo.stars.toLocaleString() %></span>
+            <span>🐛 <%= repo.open_issues %> issues</span>
+            <span style="color: #8b949e; font-size: 0.8rem;">
+              Saved <%= new Date(repo.saved_at).toLocaleDateString() %>
+            </span>
+          </div>
+
+          <div class="card-actions">
+            <a href="<%= repo.repo_url %>" target="_blank" rel="noopener" class="btn-outline">
+              View on GitHub
+            </a>
+            <form action="/remove" method="POST" style="display:inline">
+              <input type="hidden" name="repo_name" value="<%= repo.repo_name %>" />
+              <button type="submit" class="btn-remove">Remove</button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <script src="/js/Saved.js"></script>
+</body>
+</html>
