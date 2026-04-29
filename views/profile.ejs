@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — GitMatch</title>
+  <link rel="stylesheet" href="/css/profile.css" />
+</head>
+<body>
+  <nav>
+    <span class="brand">GitMatch</span>
+    <a href="/discover">Discover</a>
+    <a href="/saved">Saved</a>
+    <a href="/profile" class="active">Profile</a>
+    <a href="/logout" class="logout">Logout</a>
+  </nav>
+
+  <div class="container">
+    <div class="profile-card">
+      <img src="<%= user.avatar %>" alt="<%= user.username %>" class="avatar" />
+      <div class="profile-info">
+        <h2><%= user.name %></h2>
+        <p class="username">@<%= user.username %></p>
+        <% if (user.bio) { %>
+          <p class="bio"><%= user.bio %></p>
+        <% } %>
+        <% if (user.location) { %>
+          <p class="meta">📍 <%= user.location %></p>
+        <% } %>
+        <div class="stats">
+          <span><strong><%= user.public_repos %></strong> repos</span>
+          <span><strong><%= user.followers %></strong> followers</span>
+          <span><strong><%= user.following %></strong> following</span>
+        </div>
+      </div>
+    </div>
+
+    <% const langs = Object.entries(user.languages || {}).sort((a,b) => b[1]-a[1]).slice(0,8) %>
+    <% if (langs.length > 0) { %>
+    <div class="section">
+      <h3>Your languages</h3>
+      <div class="tag-list">
+        <% langs.forEach(([lang, count]) => { %>
+          <span class="tag"><%= lang %> <span class="tag-count"><%= count %></span></span>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <% const topics = Object.entries(user.topics || {}).sort((a,b) => b[1]-a[1]).slice(0,10) %>
+    <% if (topics.length > 0) { %>
+    <div class="section">
+      <h3>Your topics</h3>
+      <div class="tag-list">
+        <% topics.forEach(([topic]) => { %>
+          <span class="tag"><%= topic %></span>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <a href="/skills" class="btn">Pick skills &amp; discover repos →</a>
+  </div>
+  <script src="/js/profile.js"></script>
+</body>
+</html>
