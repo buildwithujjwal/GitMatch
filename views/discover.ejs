@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discover — GitMatch</title>
+  <link rel="stylesheet" href="/css/DiscoverPage.css" />
+</head>
+<body>
+
+  <nav>
+    <span class="brand">GitMatch</span>
+    <a href="/discover" class="active">Discover</a>
+    <a href="/saved">Saved</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </nav>
+
+  <div class="container">
+
+    <div class="discover-header">
+      <h2>Discover <em>repos</em></h2>
+      <a href="/skills" class="btn-outline"><span>✦ Change Skills</span></a>
+    </div>
+
+    <div class="ornament"></div>
+
+    <!-- Selected skills -->
+    <div class="tag-list" style="margin-bottom: 24px;">
+      <% selected.forEach(skill => { %>
+        <span class="tag"><%= skill %></span>
+      <% }) %>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <% if (repos.length === 0 && !error) { %>
+      <p style="color: var(--text-muted);">No repos found for these skills. Try different ones.</p>
+    <% } %>
+
+    <!-- Repo cards -->
+    <div class="card-grid">
+      <% repos.forEach(repo => { %>
+        <div class="repo-card">
+
+          <div class="card-top">
+            <span class="difficulty <%= repo.difficulty %>"><%= repo.difficulty %></span>
+            <span class="lang-tag"><%= repo.language %></span>
+          </div>
+
+          <h3 class="repo-name">
+            <a href="<%= repo.url %>" target="_blank" rel="noopener"><%= repo.name %></a>
+          </h3>
+
+          <p class="repo-desc"><%= repo.description %></p>
+
+          <div class="label-list">
+            <% repo.labels.forEach(label => { %>
+              <span class="label"><%= label %></span>
+            <% }) %>
+          </div>
+
+          <div class="card-stats">
+            <span>⭐ <%= repo.stars.toLocaleString() %></span>
+            <span>🍴 <%= repo.forks.toLocaleString() %></span>
+            <span>🐛 <%= repo.open_issues %> issues</span>
+          </div>
+
+          <div class="card-actions">
+            <form action="/save" method="POST" style="display:inline">
+              <input type="hidden" name="repo_name"   value="<%= repo.name %>" />
+              <input type="hidden" name="repo_url"    value="<%= repo.url %>" />
+              <input type="hidden" name="description" value="<%= repo.description %>" />
+              <input type="hidden" name="stars"       value="<%= repo.stars %>" />
+              <input type="hidden" name="language"    value="<%= repo.language %>" />
+              <input type="hidden" name="open_issues" value="<%= repo.open_issues %>" />
+              <input type="hidden" name="difficulty"  value="<%= repo.difficulty %>" />
+              <button type="submit" class="btn-save">
+                <span class="label-inner">Save</span>
+              </button>
+            </form>
+            <a href="<%= repo.url %>" target="_blank" rel="noopener" class="btn-outline">
+              <span>View on GitHub →</span>
+            </a>
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Pagination -->
+    <% if (repos.length > 0) { %>
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a href="/discover?page=<%= currentPage - 1 %>" class="btn-outline"><span>← Prev</span></a>
+      <% } %>
+      <span class="page-info">Page <%= currentPage %></span>
+      <% if (has_more) { %>
+        <a href="/discover?page=<%= currentPage + 1 %>" class="btn-outline"><span>Next →</span></a>
+      <% } %>
+    </div>
+    <% } %>
+
+  </div>
+
+  <script src="/js/DiscoverPage.js"></script>
+</body>
+</html>
