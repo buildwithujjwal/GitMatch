@@ -6,16 +6,14 @@
   <title>Profile — GitMatch</title>
   <link rel="stylesheet" href="/css/profile.css" />
 </head>
-<body>
-  <nav>
-    <span class="brand">GitMatch</span>
-    <a href="/discover">Discover</a>
-    <a href="/saved">Saved</a>
-    <a href="/profile" class="active">Profile</a>
-    <a href="/logout" class="logout">Logout</a>
-  </nav>
+<body class="dark">
 
+  <%- include('partials/header') %>
+
+  <!-- Main Content -->
   <div class="container">
+
+    <!-- Profile Card -->
     <div class="profile-card">
       <img src="<%= user.avatar %>" alt="<%= user.username %>" class="avatar" />
       <div class="profile-info">
@@ -35,18 +33,23 @@
       </div>
     </div>
 
+    <!-- Languages -->
     <% const langs = Object.entries(user.languages || {}).sort((a,b) => b[1]-a[1]).slice(0,8) %>
     <% if (langs.length > 0) { %>
     <div class="section">
       <h3>Your languages</h3>
       <div class="tag-list">
         <% langs.forEach(([lang, count]) => { %>
-          <span class="tag"><%= lang %> <span class="tag-count"><%= count %></span></span>
+          <span class="tag">
+            <%= lang %>
+            <span class="tag-count"><%= count %></span>
+          </span>
         <% }) %>
       </div>
     </div>
     <% } %>
 
+    <!-- Topics -->
     <% const topics = Object.entries(user.topics || {}).sort((a,b) => b[1]-a[1]).slice(0,10) %>
     <% if (topics.length > 0) { %>
     <div class="section">
@@ -59,8 +62,17 @@
     </div>
     <% } %>
 
-    <a href="/skills" class="btn">Pick skills &amp; discover repos →</a>
+    <!-- CTA -->
+    <a href="/skills" class="btn">
+      Pick skills &amp; discover repos
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </a>
+
   </div>
+
   <script src="/js/profile.js"></script>
 </body>
 </html>
