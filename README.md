@@ -15,7 +15,7 @@ GitMatch connects with your GitHub account and turns your profile into a persona
 ## Features
 
 - **GitHub OAuth login** — sign in with your GitHub account, no manual setup needed
-- **Profile overview** — fetches your GitHub profile, stats, and Languages
+- **Profile overview** — fetches your GitHub profile, stats, and Languages — lowercase languages
 - **Skills picker** — detects languages and frameworks from your repos; lets you add or remove skills
 - **Issue recommendations** — matches real open source issues to your selected skills
 - **AI breakdown** — click "View More Details" on any saved issue to get an AI-generated debrief, tech stack, prerequisites, and step-by-step contribution guide
@@ -46,14 +46,6 @@ GitMatch connects with your GitHub account and turns your profile into a persona
 - MongoDB running locally or a connection string
 - GitHub OAuth App (Client ID + Secret)
 - Groq API key
-
-### Installation
-
-```bash
-git clone https://github.com/your-username/gitmatch.git
-cd gitmatch
-npm install
-```
 
 ### Environment Variables
 
@@ -98,7 +90,7 @@ Open `http://localhost:3000` in your browser.
 2. GitMatch fetches your profile, repos, and stats via the GitHub API
 3. It detects languages and frameworks you've used
 4. You confirm or expand your skill set using the skills picker
-5. GitMatch returns a curated list of open source issues matched to your skills
+5. GitMatch returns matched open source issues to your skill
 6. Click **View More Details** on any saved issue to get an AI-powered breakdown
 7. Save issues you like and open them directly on GitHub
 
