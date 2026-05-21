@@ -1,142 +1,282 @@
-const express = require('express');
+const express = require("express");
+const axios = require("axios");
+
+const Cache = require("../models/Cache");
+
 const router = express.Router();
-const axios = require('axios');
-const Cache = require('../models/Cache');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+// skill mapping
+
+const LANGUAGE_MAP = {
+  "HTML/CSS": "HTML",
+  "Node.js": "JavaScript",
+  ".NET": "C#",
+};
+
+const TOPIC_SKILLS = new Set([
+  "React",
+  "Vue",
+  "Angular",
+  "Next.js",
+  "Django",
+  "Flask",
+  "FastAPI",
+  "Spring",
+  "Laravel",
+  "Flutter",
+  "TensorFlow",
+  "PyTorch",
+  "Docker",
+  "Kubernetes",
+]);
+
+// auth middleware
+
 function requireLogin(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.session.user) return res.redirect("/login");
   next();
 }
 
-// maps skill names to github search qualifiers
-function buildQuery(skills) {
-  const langMap = {
-    'HTML/CSS': 'HTML',
-    'Node.js': 'JavaScript',
-    '.NET': 'C#',
-  };
+// build github search query
 
-  const topicSkills = [
-    'React', 'Vue', 'Angular', 'Next.js', 'Django', 'Flask',
-    'FastAPI', 'Spring', 'Laravel', 'Flutter', 'TensorFlow',
-    'PyTorch', 'Docker', 'Kubernetes'
-  ];
+function buildIssueQuery(skills = []) {
+  return [
+    ...skills.map((skill) =>
+      TOPIC_SKILLS.has(skill)
+        ? `topic:${skill.toLowerCase()}`
+        : `language:${LANGUAGE_MAP[skill] || skill}`,
+    ),
+    "is:open",
+    "is:issue",
+    'label:"good first issue"',
+    "sort:updated",
+  ].join(" ");
+}
 
-  const parts = [];
+// format github issue response
 
-  skills.forEach(skill => {
-    if (topicSkills.includes(skill)) {
-      parts.push(`topic:${skill.toLowerCase()}`);
-    } else {
-      const lang = langMap[skill] || skill;
-      parts.push(`language:"${lang}"`);
+function formatIssue(issue) {
+  const repo = issue.repository;
+
+  if (!repo?.nameWithOwner) return null;
+
+  const totalSize = repo.languages?.totalSize || 0;
+
+  const languageBreakdown = {};
+  const validTags = [];
+
+  for (const { size, node } of repo.languages?.edges || []) {
+    const percentage = Number(((size / totalSize) * 100).toFixed(2));
+
+    languageBreakdown[node.name] = percentage;
+
+    if (percentage >= 10) {
+      validTags.push(node.name);
     }
-  });
-
-  // only repos with open issues, decent size
-  return parts.join(' ') + ' has:issues is:public stars:>50';
-}
-
-// work out difficulty from star count
-function getDifficulty(stars) {
-  if (stars < 500) return 'beginner';
-  if (stars < 5000) return 'intermediate';
-  return 'advanced';
-}
-
-// generate some labels based on repo data
-function getLabels(repo) {
-  const labels = [];
-  if (repo.open_issues_count > 50) labels.push('help wanted');
-  if (repo.stargazers_count < 500) labels.push('good first issue');
-  if (['JavaScript', 'TypeScript', 'HTML', 'CSS'].includes(repo.language)) labels.push('frontend');
-  if (['Go', 'Rust', 'C', 'C++'].includes(repo.language)) labels.push('systems');
-  if (['Python', 'Java', 'Ruby', 'PHP'].includes(repo.language)) labels.push('backend');
-  return labels.slice(0, 3);
-}
-
-async function searchRepos(query, page = 1) {
-  const cacheKey = `${query}__page${page}`;
-
-  // check cache first
-  const cached = await Cache.findOne({ query: cacheKey });
-  if (cached) {
-    console.log('cache hit:', cacheKey);
-    return { results: cached.results, has_more: cached.has_more, fromCache: true };
   }
 
-  const headers = { Authorization: `token ${GITHUB_TOKEN}` };
-  const perPage = 12;
+  return {
+    id: issue.id,
+    title: issue.title,
+    url: issue.url,
+    number: issue.number,
+    state: issue.state,
 
-  const { data } = await axios.get('https://api.github.com/search/repositories', {
-    headers,
-    params: {
-      q: query,
-      sort: 'updated',
-      order: 'desc',
-      per_page: perPage,
-      page
-    }
-  });
+    body:
+      issue.bodyText?.length > 500
+        ? `${issue.bodyText.slice(0, 500)}...`
+        : issue.bodyText || "",
 
-  const results = data.items
-    .filter(r => r.open_issues_count > 0)
-    .map(repo => ({
-      name: repo.full_name,
-      stars: repo.stargazers_count,
-      forks: repo.forks_count,
-      url: repo.html_url,
-      description: repo.description || 'No description provided',
-      language: repo.language || 'Unknown',
-      open_issues: repo.open_issues_count,
-      difficulty: getDifficulty(repo.stargazers_count),
-      labels: getLabels(repo)
-    }));
+    comments: issue.comments?.totalCount || 0,
+    labels: issue.labels?.nodes?.map((l) => l.name) || [],
+    createdAt: issue.createdAt,
 
-  const has_more = data.total_count > page * perPage;
+    repo_name: repo.nameWithOwner,
+    repo_url: repo.url,
+    repo_stars: repo.stargazerCount || 0,
+    repo_description: repo.description || "No description",
 
-  // save to cache
-  await Cache.create({ query: cacheKey, results, has_more });
-
-  return { results, has_more, fromCache: false };
+    language: repo.primaryLanguage?.name || "Unknown",
+    languageBreakdown,
+    validTags,
+  };
 }
 
-router.get('/discover', requireLogin, async (req, res) => {
+// fetch github issues
+
+async function graphqlSearchIssues(skillQuery, userToken) {
+  const cacheKey = `graphql__${skillQuery}`;
+
+  const cached = await Cache.findOne({ query: cacheKey });
+
+  if (cached) return cached.results;
+
+  const query = `
+    query($query: String!, $first: Int!, $after: String) {
+      search(query: $query, type: ISSUE, first: $first, after: $after) {
+        issueCount
+
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+
+        nodes {
+          ... on Issue {
+            id
+            title
+            url
+            number
+            state
+            bodyText
+            createdAt
+
+            comments {
+              totalCount
+            }
+
+            labels(first: 10) {
+              nodes { name }
+            }
+
+            repository {
+              nameWithOwner
+              stargazerCount
+              description
+              url
+
+              primaryLanguage {
+                name
+              }
+
+              languages(first: 10, orderBy: { field: SIZE, direction: DESC }) {
+                totalSize
+
+                edges {
+                  size
+                  node { name }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  let results = [];
+  let after = null;
+  let hasNextPage = true;
+
+  while (hasNextPage && results.length < 50) {
+    const { data } = await axios.post(
+      "https://api.github.com/graphql",
+      {
+        query,
+        variables: {
+          query: skillQuery,
+          first: 25,
+          after,
+        },
+      },
+      {
+        headers: {
+          Authorization: `token ${userToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    const search = data?.data?.search;
+
+    if (!search) {
+      throw new Error("Invalid GitHub GraphQL response");
+    }
+
+    hasNextPage = search.pageInfo.hasNextPage;
+    after = search.pageInfo.endCursor;
+
+    results.push(...search.nodes.map(formatIssue).filter(Boolean));
+  }
+
+  console.log(`Fetched ${results.length} issues`);
+
+  await Cache.create({
+    query: cacheKey,
+    results,
+    has_more: false,
+  });
+
+  return results;
+}
+
+// discover page
+
+router.get("/discover", requireLogin, async (req, res) => {
   const selected = req.session.selectedSkills || [];
 
-  // no skills picked yet — send them to skill selector
-  if (selected.length === 0) return res.redirect('/skills');
+  if (!selected.length) {
+    return res.redirect("/skills");
+  }
 
-  const page = parseInt(req.query.page) || 1;
-  const query = buildQuery(selected);
+  const userToken = req.session.githubToken;
 
   try {
-    const { results, has_more } = await searchRepos(query, page);
+    const skillQuery = buildIssueQuery(selected);
 
-    res.render('discover', {
-      title: 'Discover',
+    console.log("GitHub Query:", skillQuery);
+
+    const repos = await graphqlSearchIssues(skillQuery, userToken);
+
+    res.render("discover", {
+      title: "Discover",
       showNav: true,
-      page: 'discover',
+      page: "discover",
+
       user: req.session.user,
-      repos: results,
-      currentPage: page,
-      has_more,
-      selected
+      selected,
+      repos,
     });
   } catch (err) {
-    console.error('Search error:', err.message);
-    res.render('discover', {
-      title: 'Discover',
+    console.error("Discover error:", err.message);
+
+    res.render("discover", {
+      title: "Discover",
       showNav: true,
-      page: 'discover',
+      page: "discover",
+
       user: req.session.user,
-      repos: [],
-      currentPage: 1,
-      has_more: false,
       selected,
-      error: 'Failed to fetch repos, try again shortly'
+      repos: [],
+
+      error: "Failed to fetch repositories. Please try again later.",
+    });
+  }
+});
+
+// github rate limit
+
+router.get("/rate-limit", async (req, res) => {
+  try {
+    const { data } = await axios.get("https://api.github.com/rate_limit", {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+      },
+    });
+
+    const graphql = data.resources.graphql;
+
+    res.json({
+      used: graphql.used,
+      remaining: graphql.remaining,
+      limit: graphql.limit,
+      resetsAt: new Date(graphql.reset * 1000).toLocaleTimeString(),
+    });
+  } catch {
+    res.status(500).json({
+      error: "Failed to fetch rate limit",
     });
   }
 });

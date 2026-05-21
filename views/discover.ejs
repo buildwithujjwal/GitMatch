@@ -6,101 +6,164 @@
   <title>Discover — GitMatch</title>
   <link rel="stylesheet" href="/css/DiscoverPage.css" />
 </head>
-<body>
+<body class="dark">
 
-  <nav>
-    <span class="brand">GitMatch</span>
-    <a href="/discover" class="active">Discover</a>
-    <a href="/saved">Saved</a>
-    <a href="/profile">Profile</a>
-    <a href="/logout">Logout</a>
-  </nav>
+  <%- include('partials/header') %>
 
+  <!-- Main Content -->
   <div class="container">
 
-    <div class="discover-header">
-      <h2>Discover <em>repos</em></h2>
-      <a href="/skills" class="btn-outline"><span>✦ Change Skills</span></a>
+    <!-- Header -->
+    <div class="header">
+      <h1 class="title">Discover Issues</h1>
+      <a href="/skills" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6m5.2-15.5l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m15.5 5.2l-4.2-4.2m0-6l4.2-4.2"></path>
+        </svg>
+        Change Skills
+      </a>
     </div>
 
-    <div class="ornament"></div>
-
-    <!-- Selected skills -->
-    <div class="tag-list" style="margin-bottom: 24px;">
-      <% selected.forEach(skill => { %>
-        <span class="tag"><%= skill %></span>
-      <% }) %>
+    <!-- Selected Skills -->
+    <div class="skills-container">
+      <% if (selected && selected.length > 0) { %>
+        <% selected.forEach(skill => { %>
+          <div class="skill-tag">
+            <%= skill %>
+            <button class="skill-remove" data-skill="<%= skill %>" aria-label="Remove <%= skill %>">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        <% }) %>
+      <% } %>
     </div>
 
+    <!-- Error State -->
     <% if (typeof error !== 'undefined' && error) { %>
-      <p class="error"><%= error %></p>
+      <div class="error-message">
+        <%= error %>
+      </div>
     <% } %>
 
+    <!-- Empty State -->
     <% if (repos.length === 0 && !error) { %>
-      <p style="color: var(--text-muted);">No repos found for these skills. Try different ones.</p>
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </div>
+        <h3 class="empty-title">No issues found</h3>
+        <p class="empty-description">
+          We couldn't find any issues matching your selected skills. Try changing your skills to discover more opportunities.
+        </p>
+        <a href="/skills" class="btn-primary">Change Skills</a>
+      </div>
     <% } %>
 
-    <!-- Repo cards -->
-    <div class="card-grid">
-      <% repos.forEach(repo => { %>
-        <div class="repo-card">
-
-          <div class="card-top">
-            <span class="difficulty <%= repo.difficulty %>"><%= repo.difficulty %></span>
-            <span class="lang-tag"><%= repo.language %></span>
-          </div>
-
-          <h3 class="repo-name">
-            <a href="<%= repo.url %>" target="_blank" rel="noopener"><%= repo.name %></a>
-          </h3>
-
-          <p class="repo-desc"><%= repo.description %></p>
-
-          <div class="label-list">
-            <% repo.labels.forEach(label => { %>
-              <span class="label"><%= label %></span>
-            <% }) %>
-          </div>
-
-          <div class="card-stats">
-            <span>⭐ <%= repo.stars.toLocaleString() %></span>
-            <span>🍴 <%= repo.forks.toLocaleString() %></span>
-            <span>🐛 <%= repo.open_issues %> issues</span>
-          </div>
-
-          <div class="card-actions">
-            <form action="/save" method="POST" style="display:inline">
-              <input type="hidden" name="repo_name"   value="<%= repo.name %>" />
-              <input type="hidden" name="repo_url"    value="<%= repo.url %>" />
-              <input type="hidden" name="description" value="<%= repo.description %>" />
-              <input type="hidden" name="stars"       value="<%= repo.stars %>" />
-              <input type="hidden" name="language"    value="<%= repo.language %>" />
-              <input type="hidden" name="open_issues" value="<%= repo.open_issues %>" />
-              <input type="hidden" name="difficulty"  value="<%= repo.difficulty %>" />
-              <button type="submit" class="btn-save">
-                <span class="label-inner">Save</span>
-              </button>
-            </form>
-            <a href="<%= repo.url %>" target="_blank" rel="noopener" class="btn-outline">
-              <span>View on GitHub →</span>
-            </a>
-          </div>
-
-        </div>
-      <% }) %>
-    </div>
-
-    <!-- Pagination -->
+    <!-- Issues List -->
+    <%
+      var ITEMS_PER_PAGE = 12;
+    %>
     <% if (repos.length > 0) { %>
-    <div class="pagination">
-      <% if (currentPage > 1) { %>
-        <a href="/discover?page=<%= currentPage - 1 %>" class="btn-outline"><span>← Prev</span></a>
+      <div class="issues-list">
+        <% repos.forEach(function(issue, index) { %>
+
+          <%
+            /* Cards beyond the first 12 are hidden at HTML render time.
+               No JS or CSS rule needed — they simply don't exist visually
+               until "Load More" reveals them. */
+          %>
+          <div class="issue-card" <% if (index >= ITEMS_PER_PAGE) { %>style="display:none"<% } %>>
+
+            <!-- Repo Meta -->
+            <div class="issue-meta-top">
+              <a href="<%= issue.repo_url %>" target="_blank" class="repo-name">
+                <%= issue.repo_name %>
+              </a>
+              <span class="language-tag"><%= issue.language %></span>
+              <div class="stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <%= issue.repo_stars.toLocaleString() %>
+              </div>
+            </div>
+
+            <!-- Issue Title -->
+            <h3 class="issue-title">
+              <a href="<%= issue.url %>" target="_blank">
+                #<%= issue.number %> <%= issue.title %>
+              </a>
+            </h3>
+
+            <!-- Description -->
+            <p class="issue-description"><%= issue.repo_description %></p>
+
+            <!-- Labels & Comments -->
+            <div class="issue-meta-bottom">
+              <div class="comments">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <%= issue.comments %>
+              </div>
+              <% if (issue.labels && issue.labels.length > 0) { %>
+                <% issue.labels.slice(0, 3).forEach(label => { %>
+                  <span class="label"><%= label %></span>
+                <% }) %>
+              <% } %>
+            </div>
+
+            <!-- Actions -->
+            <div class="issue-actions">
+              <form class="save-form" method="POST" action="/save" style="display:inline">
+                <input type="hidden" name="repo_name" value="<%= issue.repo_name %>" />
+                <input type="hidden" name="repo_url" value="<%= issue.repo_url %>" />
+                <input type="hidden" name="description" value="<%= issue.repo_description %>" />
+                <input type="hidden" name="stars" value="<%= issue.repo_stars %>" />
+                <input type="hidden" name="language" value="<%= issue.language %>" />
+                <input type="hidden" name="issue_title" value="<%= issue.title %>" />
+                <input type="hidden" name="issue_url" value="<%= issue.url %>" />
+                <input type="hidden" name="issue_number" value="<%= issue.number %>" />
+                <button type="submit" class="btn-primary btn-save">
+                  Save Issue
+                </button>
+              </form>
+              <a href="<%= issue.url %>" target="_blank" class="btn-secondary">
+                View
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- Load More (only rendered when there are more than 12 issues) -->
+      <% if (repos.length > ITEMS_PER_PAGE) { %>
+        <div class="load-more-container" id="load-more-container">
+          <p class="load-more-meta" id="load-more-meta">
+            Showing <%= ITEMS_PER_PAGE %> of <%= repos.length %> issues
+          </p>
+          <button class="btn-load-more" id="load-more-btn">
+            <span class="load-more-text">Load <%= Math.min(ITEMS_PER_PAGE, repos.length - ITEMS_PER_PAGE) %> More</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
       <% } %>
-      <span class="page-info">Page <%= currentPage %></span>
-      <% if (has_more) { %>
-        <a href="/discover?page=<%= currentPage + 1 %>" class="btn-outline"><span>Next →</span></a>
-      <% } %>
-    </div>
+
     <% } %>
 
   </div>
