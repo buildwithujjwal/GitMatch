@@ -4,73 +4,202 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Saved — GitMatch</title>
-  <link rel="stylesheet" href="/css/skills.css" />
-<link rel="stylesheet" href="/css/saved.css" />
+  <link rel="stylesheet" href="/css/saved.css" />
 </head>
-<body>
-  <nav>
-    <span class="brand">GitMatch</span>
-    <a href="/discover">Discover</a>
-    <a href="/saved" class="active">Saved</a>
-    <a href="/profile">Profile</a>
-    <a href="/logout">Logout</a>
-  </nav>
+<body class="dark">
+
+  <%- include('partials/header') %>
 
   <div class="container">
-    <div class="discover-header">
-      <h2>Saved repos</h2>
-      <span style="color: #8b949e; font-size: 0.9rem;"><%= saved.length %> saved</span>
+
+    <div class="header">
+      <h1 class="title">
+        Saved Issues
+        <span class="count-badge"><%= saved.length %> saved</span>
+      </h1>
+      <a href="/discover" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        Discover More
+      </a>
     </div>
 
     <% if (typeof error !== 'undefined' && error) { %>
-      <p class="error"><%= error %></p>
+      <div class="error"><%= error %></div>
     <% } %>
 
     <% if (saved.length === 0) { %>
       <div class="empty-state">
-        <p>Nothing saved yet.</p>
-        <a href="/discover" class="btn" style="margin-top: 16px;">Go discover repos →</a>
+        <div class="empty-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h3 class="empty-title">Nothing saved yet</h3>
+        <p class="empty-description">Start discovering issues that match your skills and save the ones you want to work on.</p>
+        <a href="/discover" class="btn-primary">Discover Issues</a>
       </div>
     <% } %>
 
-    <div class="saved-list">
-      <% saved.forEach(repo => { %>
-        <div class="saved-card">
-          <div class="card-top">
-            <span class="difficulty <%= repo.difficulty %>"><%= repo.difficulty %></span>
-            <span class="lang-tag"><%= repo.language %></span>
+    <% if (saved.length > 0) { %>
+      <div class="saved-list">
+        <% saved.forEach(item => { %>
+          <div class="saved-card">
+
+            <div class="issue-repo-meta">
+              <a href="<%= item.repo_url %>" target="_blank" class="repo-ref"><%= item.repo_name %></a>
+              <span class="lang-tag"><%= item.language %></span>
+              <div class="stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <%= item.stars.toLocaleString() %>
+              </div>
+            </div>
+
+            <h3 class="issue-title">
+              <a href="<%= item.issue_url %>" target="_blank">
+                #<%= item.issue_number %> <%= item.issue_title %>
+              </a>
+            </h3>
+
+            <p class="repo-desc"><%= item.description %></p>
+
+            <div class="card-stats">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Saved <%= new Date(item.saved_at).toLocaleDateString() %>
+            </div>
+
+            <div class="card-actions">
+              <a href="<%= item.issue_url %>" target="_blank" class="btn-outline">
+                View Issue
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+
+              <%# View More Details — passes issue data as data-* attributes for JS to read %>
+              <button
+                class="btn-outline btn-details"
+                data-issue-title="<%= item.issue_title %>"
+                data-issue-number="<%= item.issue_number %>"
+                data-repo-name="<%= item.repo_name %>"
+                data-repo-url="<%= item.repo_url %>"
+                data-issue-url="<%= item.issue_url %>"
+                data-language="<%= item.language %>"
+                data-description="<%= item.description.replace(/"/g, '&quot;') %>"
+                data-labels="<%= (item.labels || []).join(',') %>"
+              >
+                View More Details
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+              </button>
+
+              <form action="/remove" method="POST" style="display:inline; margin-left: auto;">
+                <input type="hidden" name="id" value="<%= item._id %>" />
+                <button type="submit" class="btn-remove">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                  </svg>
+                  Remove
+                </button>
+              </form>
+            </div>
+
           </div>
+        <% }) %>
+      </div>
+    <% } %>
 
-          <h3 class="repo-name">
-            <a href="<%= repo.repo_url %>" target="_blank" rel="noopener">
-              <%= repo.repo_name %>
-            </a>
-          </h3>
+  </div>
 
-          <p class="repo-desc"><%= repo.description %></p>
+  <!-- AI Breakdown Modal (injected by JS) -->
+  <div id="breakdown-overlay" class="breakdown-overlay" role="dialog" aria-modal="true" aria-labelledby="breakdown-title">
+    <div class="breakdown-modal">
 
-          <div class="card-stats">
-            <span>⭐ <%= repo.stars.toLocaleString() %></span>
-            <span>🐛 <%= repo.open_issues %> issues</span>
-            <span style="color: #8b949e; font-size: 0.8rem;">
-              Saved <%= new Date(repo.saved_at).toLocaleDateString() %>
-            </span>
-          </div>
-
-          <div class="card-actions">
-            <a href="<%= repo.repo_url %>" target="_blank" rel="noopener" class="btn-outline">
-              View on GitHub
-            </a>
-            <form action="/remove" method="POST" style="display:inline">
-              <input type="hidden" name="repo_name" value="<%= repo.repo_name %>" />
-              <button type="submit" class="btn-remove">Remove</button>
-            </form>
-          </div>
+      <div class="breakdown-header">
+        <div>
+          <h2 class="breakdown-title" id="breakdown-title">Issue Breakdown</h2>
+          <p class="breakdown-subtitle" id="breakdown-subtitle"></p>
         </div>
-      <% }) %>
+        <button id="breakdown-close" class="breakdown-close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="breakdown-body" id="breakdown-body">
+
+        <!-- Loading state -->
+        <div id="breakdown-loading" class="breakdown-loading">
+          <div class="breakdown-spinner"></div>
+          <span>Generating AI breakdown…</span>
+        </div>
+
+        <!-- Error state -->
+        <div id="breakdown-error" class="breakdown-error" hidden>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span id="breakdown-error-msg">Failed to generate breakdown.</span>
+        </div>
+
+        <!-- Content — sections populated by JS -->
+        <div id="breakdown-content" hidden>
+
+          <div class="breakdown-section">
+            <div class="breakdown-section-header breakdown-section-header--blue">
+              <span class="breakdown-section-icon">📋</span>
+              <h3>Debrief</h3>
+            </div>
+            <p id="bd-debrief" class="breakdown-text"></p>
+          </div>
+
+          <div class="breakdown-section">
+            <div class="breakdown-section-header breakdown-section-header--green">
+              <span class="breakdown-section-icon">🔍</span>
+              <h3>Repository Insights</h3>
+            </div>
+            <div id="bd-badges" class="breakdown-badges"></div>
+            <div id="bd-insights-meta" class="breakdown-insights-meta"></div>
+          </div>
+
+          <div class="breakdown-section">
+            <div class="breakdown-section-header breakdown-section-header--orange">
+              <span class="breakdown-section-icon">🛠️</span>
+              <h3>How to Tackle</h3>
+            </div>
+            <ol id="bd-steps" class="breakdown-steps"></ol>
+          </div>
+
+          <div class="breakdown-footer">
+            <a id="bd-open-issue" href="#" target="_blank" class="btn-primary">Open Issue →</a>
+            <a id="bd-open-repo" href="#" target="_blank" class="btn-outline">View Repo</a>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="/js/Saved.js"></script>
+  <script src="/js/saved.js"></script>
 </body>
 </html>
