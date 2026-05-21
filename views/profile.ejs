@@ -34,20 +34,47 @@
     </div>
 
     <!-- Languages -->
-    <% const langs = Object.entries(user.languages || {}).sort((a,b) => b[1]-a[1]).slice(0,8) %>
-    <% if (langs.length > 0) { %>
-    <div class="section">
-      <h3>Your languages</h3>
-      <div class="tag-list">
-        <% langs.forEach(([lang, count]) => { %>
-          <span class="tag">
-            <%= lang %>
-            <span class="tag-count"><%= count %></span>
-          </span>
-        <% }) %>
-      </div>
-    </div>
-    <% } %>
+<% const langs = Object.entries(user.languages || {}).sort((a,b) => b[1]-a[1]).slice(0,8) %>
+<% if (langs.length > 0) { %>
+<div class="section">
+  <h3>Your languages</h3>
+
+  <%
+    const total = langs.reduce((sum, [, count]) => sum + count, 0);
+    const langColors = {
+      "JavaScript": "#f1e05a", "TypeScript": "#3178c6", "Python": "#3572A5",
+      "HTML": "#e34c26", "CSS": "#563d7c", "Java": "#b07219",
+      "C++": "#f34b7d", "C": "#555555", "C#": "#178600",
+      "Ruby": "#701516", "Go": "#00ADD8", "Rust": "#dea584",
+      "PHP": "#4F5D95", "Shell": "#89e051", "Dart": "#00B4AB",
+      "HTML/CSS": "#e34c26", "Swift": "#F05138", "Kotlin": "#A97BFF"
+    };
+    const defaultColors = ["#8b949e","#6e7681","#484f58"];
+  %>
+
+  <div style="display:flex; width:100%; height:10px; border-radius:6px; overflow:hidden; gap:2px; margin-bottom:12px;">
+    <% langs.forEach(([lang, count], i) => {
+      const pct = ((count / total) * 100).toFixed(1);
+      const color = langColors[lang] || defaultColors[i % defaultColors.length];
+    %>
+      <span style="display:block; width:<%= pct %>%; height:100%; background:<%= color %>; border-radius:2px;" title="<%= lang %> <%= pct %>%"></span>
+    <% }) %>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px 16px;">
+    <% langs.forEach(([lang, count], i) => {
+      const pct = ((count / total) * 100).toFixed(1);
+      const color = langColors[lang] || defaultColors[i % defaultColors.length];
+    %>
+      <span style="display:flex; align-items:center; gap:6px; font-size:13px;">
+        <span style="width:10px; height:10px; border-radius:50%; background:<%= color %>; flex-shrink:0;"></span>
+        <%= lang %> <span style="opacity:0.6;"><%= pct %>%</span>
+      </span>
+    <% }) %>
+  </div>
+
+</div>
+<% } %>
 
     <!-- Topics -->
     <% const topics = Object.entries(user.topics || {}).sort((a,b) => b[1]-a[1]).slice(0,10) %>
