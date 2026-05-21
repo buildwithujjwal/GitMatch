@@ -6,7 +6,7 @@ const {
   removeIssue,
   showSaved,
   getBreakdown,
-} = require("../controllers/savedController");
+} = require("../controllers/SavedController");
 
 router.post("/save", requireLogin, saveIssue);
 router.post("/remove", requireLogin, removeIssue);
