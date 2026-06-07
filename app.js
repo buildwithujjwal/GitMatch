@@ -9,6 +9,7 @@ const GitHubStrategy = require("passport-github2").Strategy;
 const path = require("path");
 
 const app = express();
+app.set("trust proxy", 1);
 
 // env variables
 
