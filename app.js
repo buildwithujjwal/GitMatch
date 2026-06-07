@@ -126,6 +126,6 @@ app.get("/", (req, res) => {
 
 // start server
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`GitMatch running on http://localhost:${PORT}`);
 });
