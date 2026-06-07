@@ -82,7 +82,7 @@ passport.use(
     {
       clientID: GITHUB_CLIENT_ID,
       clientSecret: GITHUB_CLIENT_SECRET,
-      callbackURL: "http://localhost:3000/auth/github/callback",
+      callbackURL: GITHUB_CALLBACK_URL,
     },
 
     (accessToken, refreshToken, profile, done) => {
