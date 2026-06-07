@@ -70,7 +70,7 @@ GROQ_API_KEY=your_groq_api_key
 3. Set the callback URL to `http://localhost:3000/auth/github/callback`
 4. Copy the Client ID and Secret into your `.env`
 
-### Run
+### Run locally
 
 ```bash
 # Development
@@ -81,6 +81,23 @@ npm start
 ```
 
 Open `http://localhost:3000` in your browser.
+
+---
+
+### Run with Docker
+
+```bash
+docker compose up
+```
+
+This starts the Express app and MongoDB together in isolated containers. No local MongoDB installation needed.
+
+Open `http://localhost:3000` in your browser.
+
+To stop:
+```bash
+docker compose down
+```
 
 ---
 
@@ -107,6 +124,7 @@ Open `http://localhost:3000` in your browser.
 - [x] MongoDB caching for GitHub API responses
 - [x] MongoDB caching for AI generated breakdowns
 - [ ] Filter recommendations by language, difficulty, or topic
+- [x] Docker containerisation with Docker Compose
 - [ ] Difficulty tags per issue (Beginner, Intermediate, Hard)
 - [ ] Repository freshness indicator (last commit, open issues count)
 
